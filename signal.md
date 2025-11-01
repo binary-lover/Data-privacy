@@ -257,49 +257,6 @@ flowchart TD
     C --> F[Per-Message Encryption]
     D --> G[Asynchronous Session Setup]
 ```
-
-### Complete Protocol Flow
-```mermaid
-flowchart TD
-    subgraph BobPreRegistration [Bob: Pre-Registration]
-        B1[Generate Identity Key<br>IK_B] --> B2[Generate Signed Pre-Key<br>SPK_B]
-        B2 --> B3[Generate One-Time Pre-Keys<br>OPK_B[1..N]]
-        B3 --> B4[Sign SPK_B with IK_B]
-        B4 --> B5[Upload Bundle to Server]
-    end
-
-    subgraph AliceInitiation [Alice: Session Initiation]
-        A1[Fetch Bob's Bundle] --> A2[Verify SPK Signature]
-        A2 --> A3[Generate Ephemeral Key<br>EK_A]
-        A3 --> A4[Perform X3DH]
-    end
-
-    subgraph X3DHCalculation [X3DH Key Agreement]
-        DH1[DH1: IK_A × SPK_B] --> C1[Concatenate<br>DH Results]
-        DH2[DH2: EK_A × IK_B] --> C1
-        DH3[DH3: EK_A × SPK_B] --> C1
-        DH4[DH4: EK_A × OPK_B] --> C1
-        C1 --> RK[Derive Root Key<br>RK = KDFDH1||DH2||DH3||DH4]
-    end
-
-    subgraph BobResponse [Bob: Session Acceptance]
-        R1[Receive Message] --> R2[Locate Used OPK]
-        R2 --> R3[Perform Mirror X3DH]
-        R3 --> R4[Derive Identical Root Key]
-    end
-
-    subgraph DoubleRatchet [Double Ratchet Messaging]
-        DR1[Initialize Ratchet<br>with Root Key] --> DR2[Symmetric Ratchet]
-        DR2 --> DR3[DH Ratchet]
-        DR3 --> DR4[Continuous Messaging]
-    end
-
-    BobPreRegistration --> AliceInitiation
-    AliceInitiation --> X3DHCalculation
-    X3DHCalculation --> BobResponse
-    BobResponse --> DoubleRatchet
-```
-
 ### X3DH Key Agreement Detail
 ```mermaid
 flowchart LR
@@ -360,43 +317,6 @@ flowchart TB
     Initialization --> SymmetricRatchet
     SymmetricRatchet --> DHRatchet
     DHRatchet --> SymmetricRatchet
-```
-
-### Per-Message Encryption Flow
-```mermaid
-flowchart LR
-    Start[Send Message] --> Step1
-    
-    subgraph Step1 [Key Derivation]
-        CK[Chain Key] --> MK[Message Key<br>= KDFCK, "message"]
-    end
-    
-    subgraph Step2 [Encryption]
-        MK --> AES[AES-256 Encryption]
-        Plaintext[Plaintext Message] --> AES
-        AES --> Ciphertext
-    end
-    
-    subgraph Step3 [Authentication]
-        Ciphertext --> HMAC[HMAC-SHA256]
-        MK --> HMAC
-        HMAC --> AuthTag
-    end
-    
-    subgraph Step4 [Transmission]
-        Ciphertext --> Message[Transmit Message]
-        AuthTag --> Message
-    end
-    
-    subgraph Step5 [Key Advancement]
-        CK --> Advance[Advance Chain<br>CK_new = KDFCK, "ratchet"]
-        Advance --> Delete[Delete Message Key]
-    end
-    
-    Step1 --> Step2
-    Step2 --> Step3
-    Step3 --> Step4
-    Step4 --> Step5
 ```
 
 ### Security Properties Flow
